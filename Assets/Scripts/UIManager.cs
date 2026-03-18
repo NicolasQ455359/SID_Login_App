@@ -5,15 +5,34 @@ public class UIManager : MonoBehaviour
     public GameObject loginPanel;
     public GameObject registerPanel;
 
+    private void Start()
+    {
+        ShowLogin();
+    }
+
     public void ShowLogin()
     {
-        loginPanel.SetActive(true);
-        registerPanel.SetActive(false);
+        if (loginPanel != null)
+        {
+            loginPanel.SetActive(true);
+        }
+
+        if (registerPanel != null)
+        {
+            registerPanel.SetActive(false);
+        }
     }
 
     public void ShowRegister()
     {
-        loginPanel.SetActive(false);
-        registerPanel.SetActive(true);
+        if (loginPanel != null)
+        {
+            loginPanel.SetActive(false);
+        }
+
+        if (registerPanel != null)
+        {
+            registerPanel.SetActive(true);
+        }
     }
 }

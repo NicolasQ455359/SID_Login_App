@@ -3516,8 +3516,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 733e1de4657e54648bd80a1e16d6e3a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AuthManager
-  usernameInput: {fileID: 467959602}
-  passwordInput: {fileID: 2031191500}
+  projectDisplayName: SID Login App - Nicolas Quintero
+  authenticationSceneName: SampleScene
+  menuSceneName: Menu
+  apiBaseUrl: https://sid-restapi.onrender.com
+  loginPanel: {fileID: 1955654137}
+  registerPanel: {fileID: 34036146}
+  loginUsernameInput: {fileID: 467959602}
+  loginPasswordInput: {fileID: 2031191500}
+  registerUsernameInput: {fileID: 1892424981}
+  registerPasswordInput: {fileID: 1222024028}
+  statusLabel: {fileID: 0}
+  projectTitleLabel: {fileID: 0}
   token: 
   username: 
 --- !u!4 &1869058566
@@ -3547,8 +3557,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b39cb608b538f23439ee5093469cb276, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LoginManager
-  usernameInput: {fileID: 467959602}
-  passwordInput: {fileID: 2031191500}
 --- !u!1 &1892424979
 GameObject:
   m_ObjectHideFlags: 0
@@ -4435,18 +4443,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1869058567}
-        m_TargetAssemblyTypeName: LoginManager, Assembly-CSharp
-        m_MethodName: OnLoginButton
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
       - m_Target: {fileID: 1869058565}
         m_TargetAssemblyTypeName: AuthManager, Assembly-CSharp
         m_MethodName: Login
