@@ -49,7 +49,21 @@ public class MenuManager : MonoBehaviour
         }
 
         CacheSceneReferences();
-        BuildRuntimeMenuUi();
+
+        // Destruir LeaderboardText existente si lo hay (para evitar duplicados)
+        if (leaderboardText != null)
+        {
+            Destroy(leaderboardText.gameObject);
+            leaderboardText = null;
+        }
+
+        // Destruir scroll view previo si existe
+        GameObject oldScroll = GameObject.Find("LeaderboardScrollView");
+        if (oldScroll != null) Destroy(oldScroll);
+
+        // Crear siempre el scroll de puntajes en posicion fija
+        CreateDynamicLeaderboardScroll();
+
         RefreshStaticTexts();
         StartCoroutine(RefreshLeaderboard());
     }
@@ -225,6 +239,7 @@ public class MenuManager : MonoBehaviour
         if (leaderboardText != null)
         {
             leaderboardText.text = entries.Count == 0 ? "No hay puntajes disponibles." : BuildLeaderboardText(entries);
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(leaderboardText.rectTransform);
         }
 
         SetStatus("Tabla de puntajes actualizada.", false);
@@ -266,6 +281,120 @@ public class MenuManager : MonoBehaviour
         statusText = statusText != null ? statusText : GameObject.Find("MenuStatusText")?.GetComponent<TMP_Text>();
         scoreInput = scoreInput != null ? scoreInput : GameObject.Find("ScoreInput")?.GetComponent<TMP_InputField>();
         leaderboardText = leaderboardText != null ? leaderboardText : GameObject.Find("LeaderboardText")?.GetComponent<TMP_Text>();
+    }
+
+    private void WrapInScrollRect(TMP_Text textComponent)
+    {
+        RectTransform originalRect = textComponent.rectTransform;
+        Transform originalParent = originalRect.parent;
+
+        Vector2 origAnchorMin = originalRect.anchorMin;
+        Vector2 origAnchorMax = originalRect.anchorMax;
+        Vector2 origPivot = originalRect.pivot;
+        Vector2 origAnchoredPosition = originalRect.anchoredPosition;
+        Vector2 origSizeDelta = originalRect.sizeDelta;
+
+        GameObject scrollViewObj = new GameObject("LeaderboardScrollView", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
+        scrollViewObj.layer = textComponent.gameObject.layer;
+        scrollViewObj.transform.SetParent(originalParent, false);
+
+        RectTransform scrollRectTransform = scrollViewObj.GetComponent<RectTransform>();
+        scrollRectTransform.anchorMin = origAnchorMin;
+        scrollRectTransform.anchorMax = origAnchorMax;
+        scrollRectTransform.pivot = origPivot;
+        scrollRectTransform.anchoredPosition = origAnchoredPosition;
+        scrollRectTransform.sizeDelta = origSizeDelta;
+
+        // Añadir fondo transparente solo si se desea, lo dejaremos transparente completo
+        Image bgImage = scrollViewObj.GetComponent<Image>();
+        bgImage.color = new Color32(0, 0, 0, 0);
+
+        GameObject viewportObj = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D));
+        viewportObj.layer = textComponent.gameObject.layer;
+        viewportObj.transform.SetParent(scrollViewObj.transform, false);
+
+        RectTransform viewportRect = viewportObj.GetComponent<RectTransform>();
+        viewportRect.anchorMin = Vector2.zero;
+        viewportRect.anchorMax = Vector2.one;
+        viewportRect.sizeDelta = Vector2.zero;
+        viewportRect.anchoredPosition = Vector2.zero;
+
+        originalRect.SetParent(viewportObj.transform, false);
+        originalRect.anchorMin = new Vector2(0f, 1f); // Stretch horizontally
+        originalRect.anchorMax = new Vector2(1f, 1f);
+        originalRect.pivot = new Vector2(0.5f, 1f);   // Top pivot
+        originalRect.sizeDelta = new Vector2(0f, 100f); // Width offset 0, initial height
+        originalRect.anchoredPosition = new Vector2(0f, 0f);
+
+        UnityEngine.UI.ContentSizeFitter fitter = textComponent.gameObject.GetComponent<UnityEngine.UI.ContentSizeFitter>();
+        if (fitter == null) fitter = textComponent.gameObject.AddComponent<UnityEngine.UI.ContentSizeFitter>();
+        fitter.verticalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
+
+        ScrollRect sr = scrollViewObj.GetComponent<ScrollRect>();
+        sr.content = originalRect;
+        sr.viewport = viewportRect;
+        sr.horizontal = false;
+        sr.vertical = true;
+        sr.scrollSensitivity = 30f;
+    }
+
+    private void CreateDynamicLeaderboardScroll()
+    {
+        GameObject canvas = GameObject.Find("Canvas");
+        if (canvas == null) return;
+        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+
+        GameObject scrollViewObj = new GameObject("LeaderboardScrollView", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
+        scrollViewObj.layer = 5;
+        scrollViewObj.transform.SetParent(canvasRect, false);
+
+        RectTransform scrollRectTransform = scrollViewObj.GetComponent<RectTransform>();
+        scrollRectTransform.anchorMin = new Vector2(0.5f, 1f);
+        scrollRectTransform.anchorMax = new Vector2(0.5f, 1f);
+        scrollRectTransform.pivot = new Vector2(0.5f, 1f);
+        scrollRectTransform.anchoredPosition = new Vector2(0f, -340f);
+        scrollRectTransform.sizeDelta = new Vector2(540f, 300f);
+
+        Image bgImage = scrollViewObj.GetComponent<Image>();
+        bgImage.color = new Color32(0, 0, 0, 0);
+
+        GameObject viewportObj = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D));
+        viewportObj.layer = 5;
+        viewportObj.transform.SetParent(scrollViewObj.transform, false);
+
+        RectTransform viewportRect = viewportObj.GetComponent<RectTransform>();
+        viewportRect.anchorMin = Vector2.zero;
+        viewportRect.anchorMax = Vector2.one;
+        viewportRect.sizeDelta = Vector2.zero;
+        viewportRect.anchoredPosition = Vector2.zero;
+
+        GameObject contentObj = new GameObject("LeaderboardText", typeof(RectTransform));
+        contentObj.layer = 5;
+        contentObj.transform.SetParent(viewportObj.transform, false);
+
+        RectTransform contentRect = contentObj.GetComponent<RectTransform>();
+        contentRect.anchorMin = new Vector2(0f, 1f);
+        contentRect.anchorMax = new Vector2(1f, 1f);
+        contentRect.pivot = new Vector2(0.5f, 1f);
+        contentRect.sizeDelta = new Vector2(0f, 100f);
+        contentRect.anchoredPosition = new Vector2(0f, 0f);
+
+        leaderboardText = contentObj.AddComponent<TextMeshProUGUI>();
+        leaderboardText.fontSize = 22;
+        leaderboardText.fontStyle = FontStyles.Normal;
+        leaderboardText.color = new Color32(232, 242, 255, 255);
+        leaderboardText.alignment = TextAlignmentOptions.Top;
+        leaderboardText.textWrappingMode = TextWrappingModes.Normal;
+
+        UnityEngine.UI.ContentSizeFitter fitter = contentObj.AddComponent<UnityEngine.UI.ContentSizeFitter>();
+        fitter.verticalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
+
+        ScrollRect sr = scrollViewObj.GetComponent<ScrollRect>();
+        sr.content = contentRect;
+        sr.viewport = viewportRect;
+        sr.horizontal = false;
+        sr.vertical = true;
+        sr.scrollSensitivity = 30f;
     }
 
     private void BuildRuntimeMenuUi()

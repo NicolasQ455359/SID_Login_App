@@ -63,25 +63,26 @@ public class AuthManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
             LoadSession();
         }
-        else
+        else if (Instance != this)
         {
-            Destroy(gameObject);
+            // PROXY MODE: No se destruye el objeto para que los botones de la UI (configurados en el Inspector) no queden muertos.
+            // Morirá naturalmente al cambiar de escena porque no tiene DontDestroyOnLoad.
         }
     }
 
     private void OnEnable()
     {
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        if (Instance == this) SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
     {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
+        if (Instance == this) SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void Start()
     {
-        HandleScene(SceneManager.GetActiveScene());
+        if (Instance == this) HandleScene(SceneManager.GetActiveScene());
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -116,6 +117,12 @@ public class AuthManager : MonoBehaviour
 
     public void Login()
     {
+        if (Instance != null && Instance != this)
+        {
+            Instance.Login();
+            return;
+        }
+
         CacheAuthSceneReferences();
 
         if (isBusy)
@@ -143,6 +150,12 @@ public class AuthManager : MonoBehaviour
 
     public void RegisterUser()
     {
+        if (Instance != null && Instance != this)
+        {
+            Instance.RegisterUser();
+            return;
+        }
+
         CacheAuthSceneReferences();
 
         if (isBusy)
@@ -170,6 +183,12 @@ public class AuthManager : MonoBehaviour
 
     public void Logout()
     {
+        if (Instance != null && Instance != this)
+        {
+            Instance.Logout();
+            return;
+        }
+
         ClearSession();
         SetStatus("Sesion cerrada.", false);
         LoadAuthenticationScene();
@@ -560,13 +579,20 @@ public class AuthManager : MonoBehaviour
             return;
         }
 
-        loginPanel = loginPanel != null ? loginPanel : GameObject.Find("LoginPanel");
-        registerPanel = registerPanel != null ? registerPanel : GameObject.Find("RegisterPanel");
+        UIManager uiManager = FindAnyObjectByType<UIManager>();
+        if (uiManager != null)
+        {
+            if (loginPanel == null) loginPanel = uiManager.loginPanel;
+            if (registerPanel == null) registerPanel = uiManager.registerPanel;
+        }
 
-        loginUsernameInput = loginUsernameInput != null ? loginUsernameInput : FindInput(loginPanel, "UsernameInput");
-        loginPasswordInput = loginPasswordInput != null ? loginPasswordInput : FindInput(loginPanel, "PasswordInput");
-        registerUsernameInput = registerUsernameInput != null ? registerUsernameInput : FindInput(registerPanel, "UsernameInput");
-        registerPasswordInput = registerPasswordInput != null ? registerPasswordInput : FindInput(registerPanel, "PasswordInput");
+        if (loginPanel == null) loginPanel = GameObject.Find("LoginPanel");
+        if (registerPanel == null) registerPanel = GameObject.Find("RegisterPanel");
+
+        if (loginUsernameInput == null) loginUsernameInput = FindInput(loginPanel, "UsernameInput");
+        if (loginPasswordInput == null) loginPasswordInput = FindInput(loginPanel, "PasswordInput");
+        if (registerUsernameInput == null) registerUsernameInput = FindInput(registerPanel, "UsernameInput");
+        if (registerPasswordInput == null) registerPasswordInput = FindInput(registerPanel, "PasswordInput");
 
         if (statusLabel == null)
         {
