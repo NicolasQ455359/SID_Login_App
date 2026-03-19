@@ -20,3 +20,7 @@ UserSettings/
 
 .DS_Store
 Thumbs.db
+
+# Permitir que la carpeta docs/Build suba a GitHub Pages
+!docs/Build/
+!docs/Builds/
